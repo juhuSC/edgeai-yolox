@@ -65,6 +65,7 @@ def make_parser():
     parser.add_argument("--task", default=None, type=str, help="type of task for model eval")
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
+    parser.add_argument("--export-snapml",  action='store_true', help='export SnapML compatible ONNX model')
     parser.add_argument("--export-det",  action='store_true', help='export the nms part in ONNX model')
     parser.add_argument(
         "opts",
@@ -165,6 +166,8 @@ def main():
     model = replace_module(model, nn.SiLU, SiLU)
     if not args.export_det:
         model.head.decode_in_inference = False
+    if args.export_snapml:
+        model.set_export_snapml(True)
     if args.export_det:
         post_process = PostprocessExport(conf_thre=0.25, nms_thre=0.45, num_classes=80)
         model_det = nn.Sequential(model, post_process)
@@ -222,7 +225,6 @@ def main():
         onnx.save(model_simp, args.output_name)
         logger.info("generated simplified onnx model named {}".format(args.output_name))
 
-    export_prototxt(model, img, args.output_name)
     logger.info("generated prototxt {}".format(args.output_name.replace('onnx', 'prototxt')))
 
 if __name__ == "__main__":
