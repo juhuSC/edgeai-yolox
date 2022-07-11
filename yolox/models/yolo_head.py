@@ -36,6 +36,7 @@ class YOLOXHead(nn.Module):
         self.num_classes = num_classes
         self.decode_in_inference = True  # for deploy, set to False
         self.export_proto = False     #Set it to True while exporting prototxt
+        self.export_snapml = False
 
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
@@ -130,6 +131,9 @@ class YOLOXHead(nn.Module):
         self.strides = strides
         self.grids = [torch.zeros(1)] * len(in_channels)
 
+    def set_export_snapml(self, val):
+        self.export_snapml = val
+
     def initialize_biases(self, prior_prob):
         for conv in self.cls_preds:
             b = conv.bias.view(self.n_anchors, -1)
@@ -189,7 +193,6 @@ class YOLOXHead(nn.Module):
                 output = torch.cat(
                     [reg_output, obj_output, cls_output], 1
                 )
-                output[:,4:,:,:] = torch.sigmoid(output[:,4:,:,:])
 
             outputs.append(output)
 
@@ -204,7 +207,7 @@ class YOLOXHead(nn.Module):
                 origin_preds,
                 dtype=xin[0].dtype,
             )
-        elif self.export_proto:
+        elif self.export_proto or self.export_snapml:
             return outputs
         else:
             self.hw = [x.shape[-2:] for x in outputs]

@@ -27,6 +27,9 @@ class YOLOX(nn.Module):
         self.backbone = backbone
         self.head = head
 
+    def set_export_snapml(self, val):
+        self.head.set_export_snapml(val)
+
     def forward(self, x, targets=None):
         # fpn output content features of [dark3, dark4, dark5]
         fpn_outs = self.backbone(x)
